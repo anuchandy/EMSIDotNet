@@ -107,7 +107,7 @@ namespace EMSIDotNet
                 throw new ArgumentException("MSI: UserAssignedIdentityObjectId, UserAssignedIdentityClientId or UserAssignedIdentityResourceId must be set");
             }
 
-            uriBuilder.Query = string.Join("&", query.Select(kv => $"{kv.Key}={kv.Value.Replace("/", "%2f").Replace(":", "%3a")}"));
+            uriBuilder.Query = uriBuilder.Query = await new FormUrlEncodedContent(query).ReadAsStringAsync();
             string url = uriBuilder.ToString();
 
             int retry = 1;
