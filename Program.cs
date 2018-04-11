@@ -30,17 +30,21 @@ namespace EMSIDotNet
         static void Main(string[] args)
         {
             Program program = new Program();
-            Program.MISToken msiToken =  program.GetTokenFromIMDSEndpointAsync(program.resource, CancellationToken.None).Result;
 
-            Console.WriteLine($"Token: {msiToken.AccessToken}");
-            Console.WriteLine($"Tokentype: {msiToken.TokenType}");
-            Console.WriteLine($"ExpireOn: {msiToken.ExpireOn}");
-            Console.WriteLine($"IsExpired: {msiToken.IsExpired}");
-            //
-            DateTime epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            //
-            Console.WriteLine($"ExpiredOnDate: {epoch.AddSeconds(Int32.Parse(msiToken.ExpireOn))}");
-            Console.WriteLine($"NowDate: {DateTime.UtcNow}");
+            for (int i = 0; i < 10; i++)
+            {
+                Program.MISToken msiToken = program.GetTokenFromIMDSEndpointAsync(program.resource, CancellationToken.None).Result;
+
+                Console.WriteLine($"Token: {msiToken.AccessToken}");
+                Console.WriteLine($"Tokentype: {msiToken.TokenType}");
+                Console.WriteLine($"ExpireOn: {msiToken.ExpireOn}");
+                Console.WriteLine($"IsExpired: {msiToken.IsExpired}");
+                //
+                DateTime epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+                //
+                Console.WriteLine($"ExpiredOnDate: {epoch.AddSeconds(Int32.Parse(msiToken.ExpireOn))}");
+                Console.WriteLine($"NowDate: {DateTime.UtcNow}");
+            }
         }
 
         private async Task<MISToken> GetTokenFromIMDSEndpointAsync(string resource, CancellationToken cancellationToken)
@@ -80,7 +84,7 @@ namespace EMSIDotNet
                     token = await RetrieveTokenFromIMDSWithRetryAsync(resource, cancellationToken);
                     cache.AddOrUpdate(resource, token, (key, oldValue) => token);
 
-                    Console.WriteLine("Retrieved from cache..");
+                    Console.WriteLine("Retrieved from endpoint and stored in cache..");
 
                     return token;
                 }
