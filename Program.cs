@@ -21,7 +21,7 @@ namespace EMSIDotNet
             var builder = new UriBuilder("http://169.254.169.254/metadata/identity/oauth2/token");
             var query = HttpUtility.ParseQueryString(builder.Query);
             query["api-version"] = "2018-02-01";
-            query["resource"] = "https://management.azure.com/";
+            query["resource1"] = "https://management.azure.com/";
             query["msi_res_id"] = "/subscriptions/ec0aa5f7-9e78-40c9-85cd-535c6305b380/resourcegroups/1c2b4bf7e1f448e/providers/Microsoft.ManagedIdentity/userAssignedIdentities/msi-idd7b42487";
             builder.Query = query.ToString();
             string url = builder.ToString();
