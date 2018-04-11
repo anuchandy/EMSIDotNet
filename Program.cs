@@ -26,28 +26,32 @@ namespace EMSIDotNet
             builder.Query = query.ToString();
             string url = builder.ToString();
 
-            HttpRequestMessage msiRequest = new HttpRequestMessage(HttpMethod.Get, url);
-            msiRequest.Headers.Add("Metadata", "true");
+            using (HttpRequestMessage msiRequest = new HttpRequestMessage(HttpMethod.Get, url))
+            {
+                msiRequest.Headers.Add("Metadata", "true");
+                using (HttpResponseMessage msiResponse = await (new HttpClient()).SendAsync(msiRequest, cancellationToken))
+                {
+                    string content = await msiResponse.Content.ReadAsStringAsync();
+                    dynamic loginInfo = JsonConvert.DeserializeObject(content);
 
-            var msiResponse = await (new HttpClient()).SendAsync(msiRequest, cancellationToken);
-            string content = await msiResponse.Content.ReadAsStringAsync();
-            dynamic loginInfo = JsonConvert.DeserializeObject(content);
+                    string accessToken = loginInfo.access_token;
+                    if (accessToken != null)
+                    {
+                        Console.WriteLine($"access_token: {accessToken}");
+                    }
+                    string expiresOn = loginInfo.expires_on;
+                    if (expiresOn != null)
+                    {
+                        Console.WriteLine($"expires_on: {expiresOn}");
+                    }
+                    string tokenType = loginInfo.token_type;
+                    if (tokenType != null)
+                    {
+                        Console.WriteLine($"token_type: {tokenType}");
+                    }
+                }
+            }
 
-            string accessToken = loginInfo.access_token;
-            if (accessToken != null)
-            {
-                Console.WriteLine($"access_token: {accessToken}");
-            }
-            string expiresOn = loginInfo.expires_on;
-            if (expiresOn != null)
-            {
-                Console.WriteLine($"expires_on: {expiresOn}");
-            }
-            string tokenType = loginInfo.token_type;
-            if (tokenType != null)
-            {
-                Console.WriteLine($"token_type: {tokenType}");
-            }
         }
     }
 }
