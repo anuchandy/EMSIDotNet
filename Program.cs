@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -51,16 +52,10 @@ namespace EMSIDotNet
         {
             // First hit cache
             //
-            Console.WriteLine("Trying with cache..");
-
             if (cache.TryGetValue(resource, out MISToken token) == true && !token.IsExpired)
             {
-                Console.WriteLine("Found in cache..");
-
                 return token;
             }
-
-            Console.WriteLine("Not in cache..");
 
             // if cache miss then retrieve from IMDS endpoint with retry
             //
@@ -69,23 +64,14 @@ namespace EMSIDotNet
             {
                 // Try hit cache once again in case another thread already updated the cache while this thread was waiting
                 //
-                Console.WriteLine("Trying cache again..");
-
                 if (cache.TryGetValue(resource, out token) == true && !token.IsExpired)
                 {
-                    Console.WriteLine("Found in cache..");
-
                     return token;
                 }
                 else
                 {
-                    Console.WriteLine("Not in cache, retriving from endpoint..");
-
                     token = await RetrieveTokenFromIMDSWithRetryAsync(resource, cancellationToken);
                     cache.AddOrUpdate(resource, token, (key, oldValue) => token);
-
-                    Console.WriteLine("Retrieved from endpoint and stored in cache..");
-
                     return token;
                 }
             }
@@ -99,9 +85,11 @@ namespace EMSIDotNet
         {
 
             var uriBuilder = new UriBuilder("http://169.254.169.254/metadata/identity/oauth2/token");
-            var query = HttpUtility.ParseQueryString(uriBuilder.Query);
-            query["api-version"] = "2018-02-01";
-            query["resource"] = resource;
+            var query = new Dictionary<string, string>
+            {
+                ["api-version"] = "2018-02-01",
+                ["resource"] = resource
+            };
             if (this.UserAssignedIdentityObjectId != null)
             {
                 query["object_id"] = this.UserAssignedIdentityObjectId;
@@ -119,15 +107,13 @@ namespace EMSIDotNet
                 throw new ArgumentException("MSI: UserAssignedIdentityObjectId, UserAssignedIdentityClientId or UserAssignedIdentityResourceId must be set");
             }
 
-            uriBuilder.Query = query.ToString();
+            uriBuilder.Query = string.Join("&", query.Select(kv => $"{kv.Key}={kv.Value.Replace("/", "%2f").Replace(":", "%3a")}"));
             string url = uriBuilder.ToString();
 
             int retry = 1;
             while (retry <= maxRetry)
             {
                 //
-                Console.WriteLine($"Sending request to endpoint...");
-
                 using (HttpRequestMessage msiRequest = new HttpRequestMessage(HttpMethod.Get, url))
                 {
                     msiRequest.Headers.Add("Metadata", "true");
@@ -138,9 +124,6 @@ namespace EMSIDotNet
                         {
 
                             int retryTimeout = retrySlots[new Random().Next(retry)];
-
-                            Console.WriteLine($"Retrying..waiting for {retryTimeout}");
-
                             await Task.Delay(retryTimeout * 1000);
                             retry++;
                         }
@@ -158,8 +141,6 @@ namespace EMSIDotNet
                                 throw new InvalidMSITokenException($"Access token not found in the msi token response {content}");
                             }
 
-                            Console.WriteLine($"Got token from endpoint...");
-
                             MISToken msiToken = new MISToken
                             {
                                 AccessToken = loginInfo.access_token,
@@ -176,8 +157,7 @@ namespace EMSIDotNet
 
         private static bool ShouldRetry(int statusCode)
         {
-            return true;
-            // return (statusCode == 429 || statusCode == 404 || (statusCode >= 500 && statusCode <= 599));
+            return (statusCode == 429 || statusCode == 404 || (statusCode >= 500 && statusCode <= 599));
         }
 
         private class MISToken
