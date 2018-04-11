@@ -31,7 +31,7 @@ namespace EMSIDotNet
                 msiRequest.Headers.Add("Metadata", "true");
                 using (HttpResponseMessage msiResponse = await (new HttpClient()).SendAsync(msiRequest, cancellationToken))
                 {
-                    Console.WriteLine("A" + msiResponse.StatusCode);
+                    Console.WriteLine("A" + ((int)msiResponse.StatusCode));
 
                     string content = await msiResponse.Content.ReadAsStringAsync();
                     Console.WriteLine("B:" + content);
