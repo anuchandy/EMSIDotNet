@@ -31,7 +31,7 @@ namespace EMSIDotNet
         {
             Program program = new Program();
 
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 100; i++)
             {
                 Program.MISToken msiToken = program.GetTokenFromIMDSEndpointAsync(program.resource, CancellationToken.None).Result;
 
@@ -176,7 +176,8 @@ namespace EMSIDotNet
 
         private static bool ShouldRetry(int statusCode)
         {
-            return (statusCode == 429 || statusCode == 404 || (statusCode >= 500 && statusCode <= 599));
+            return true;
+            // return (statusCode == 429 || statusCode == 404 || (statusCode >= 500 && statusCode <= 599));
         }
 
         private class MISToken
